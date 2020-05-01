@@ -43,12 +43,22 @@ userSchema.pre('save', function(next){
 			bcrypt.hash(user.password, salt, function(err, hash){
 				if(err) return next(err);
 				user.password = hash;
-				console.log(hash);
+				next()
 			})
 		})
+	} else {
+		next();
 	}
-	next();
 })
+
+userSchema.statics.findByToken = function(token, cb) {
+	jwt.verify(token, 'mixxim', (err, decode) => {
+		User.findOne({'_id': decode, 'token': token}, (err, user) => {
+			if(err) return cb(err);
+			cb(null, user);
+		})
+	})
+}
 
 userSchema.methods.comparePassword = function(plainPassword, cb){
 	bcrypt.compare(plainPassword, this.password, (err, isMatch) => {
